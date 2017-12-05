@@ -16,6 +16,7 @@ type Running interface {
 type Compiling interface {
 	log
 	LookupCommandFunc() func(...string) interface{}
+	LookupMetaCommandFunc() func(string, string, []string) interface{}
 	AliasFunc() func(entity, key, alias string) string
 	Fillers() map[string]interface{}
 	ProcessedFillers() map[string]interface{}

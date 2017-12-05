@@ -54,6 +54,7 @@ func (e *runEnv) Log() *logger.Logger {
 type compileEnv struct {
 	fillers, processedFillers, resolvedVariables map[string]interface{}
 	lookupCommandFunc                            func(...string) interface{}
+	lookupMetaCommandFunc                        func(string, string, []string) interface{}
 	aliasFunc                                    func(entity, key, alias string) string
 	missingHolesFunc                             func(string, []string) interface{}
 	log                                          *logger.Logger
@@ -110,6 +111,10 @@ func (e *compileEnv) LookupCommandFunc() func(...string) interface{} {
 	return e.lookupCommandFunc
 }
 
+func (e *compileEnv) LookupMetaCommandFunc() func(string, string, []string) interface{} {
+	return e.lookupMetaCommandFunc
+}
+
 func (e *compileEnv) AliasFunc() func(entity, key, alias string) string {
 	return e.aliasFunc
 }
@@ -144,6 +149,11 @@ func (b *envBuilder) WithMissingHolesFunc(fn func(string, []string) interface{})
 
 func (b *envBuilder) WithLookupCommandFunc(fn func(...string) interface{}) *envBuilder {
 	b.E.lookupCommandFunc = fn
+	return b
+}
+
+func (b *envBuilder) WithLookupMetaCommandFunc(fn func(string, string, []string) interface{}) *envBuilder {
+	b.E.lookupMetaCommandFunc = fn
 	return b
 }
 

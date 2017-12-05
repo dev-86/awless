@@ -16,6 +16,7 @@ type Runner struct {
 	AliasFunc                              func(entity, key, alias string) string
 	MissingHolesFunc                       func(string, []string) interface{}
 	CmdLookuper                            func(tokens ...string) interface{}
+	MetaLookuper                           func(string, string, []string) interface{}
 	Validators                             []Validator
 
 	BeforeRun func(*TemplateExecution) (bool, error)

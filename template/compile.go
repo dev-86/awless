@@ -15,6 +15,7 @@ type Mode []compileFunc
 
 var (
 	TestCompileMode = []compileFunc{
+		resolveMetaPass,
 		verifyCommandsDefinedPass,
 		failOnDeclarationWithNoResultPass,
 		processAndValidateParamsPass,
@@ -25,21 +26,13 @@ var (
 		inlineVariableValuePass,
 	}
 
-	NewRunnerCompileMode = []compileFunc{
-		verifyCommandsDefinedPass,
-		failOnDeclarationWithNoResultPass,
-		processAndValidateParamsPass,
-		checkInvalidReferenceDeclarationsPass,
-		resolveHolesPass,
-		resolveMissingHolesPass,
-		resolveAliasPass,
-		inlineVariableValuePass,
+	NewRunnerCompileMode = append(TestCompileMode,
 		failOnUnresolvedHolesPass,
 		failOnUnresolvedAliasPass,
 		convertParamsPass,
 		validateCommandsPass,
 		injectCommandsPass,
-	}
+	)
 )
 
 func Compile(tpl *Template, cenv env.Compiling, mode ...Mode) (*Template, env.Compiling, error) {
@@ -86,6 +79,35 @@ func verifyCommandsDefinedPass(tpl *Template, cenv env.Compiling) (*Template, en
 		key := fmt.Sprintf("%s%s", node.Action, node.Entity)
 		if cmd := cenv.LookupCommandFunc()(key); cmd == nil {
 			return tpl, cenv, fmt.Errorf("cannot find command for '%s'", key)
+		}
+	}
+	return tpl, cenv, nil
+}
+
+func resolveMetaPass(tpl *Template, cenv env.Compiling) (*Template, env.Compiling, error) {
+	if cenv.LookupMetaCommandFunc() == nil {
+		return tpl, cenv, nil
+	}
+
+	for _, node := range tpl.CommandNodesIterator() {
+		meta := cenv.LookupMetaCommandFunc()(node.Action, node.Entity, node.Keys())
+		if meta != nil {
+			type R interface {
+				Resolve(map[string]string) (*Template, error)
+			}
+			resolv, ok := meta.(R)
+			if !ok {
+				return tpl, cenv, errors.New("meta command can not be resolved")
+			}
+			paramsStr := make(map[string]string)
+			for k, v := range node.Params {
+				paramsStr[k] = v.String()
+			}
+			resolved, err := resolv.Resolve(paramsStr)
+			if err != nil {
+				return tpl, cenv, fmt.Errorf("%s %s: resolve meta command: %s", node.Action, node.Entity, err)
+			}
+			tpl.ReplaceNodeByTemplate(node, resolved)
 		}
 	}
 	return tpl, cenv, nil
@@ -479,4 +501,21 @@ func contains(arr []string, s string) bool {
 		}
 	}
 	return false
+}
+
+func (t *Template) ReplaceNodeByTemplate(n ast.Node, tplToReplace *Template) error {
+	nodeIndex := -1
+	for i, st := range t.Statements {
+		if st.Node == n {
+			nodeIndex = i
+		}
+	}
+	if nodeIndex == -1 {
+		return fmt.Errorf("node '%v' not found", n)
+	}
+	after := make([]*ast.Statement, len(t.Statements[nodeIndex+1:]))
+	copy(after, t.Statements[nodeIndex+1:])
+	t.Statements = append(t.Statements[:nodeIndex], tplToReplace.Statements...)
+	t.Statements = append(t.Statements, after...)
+	return nil
 }
