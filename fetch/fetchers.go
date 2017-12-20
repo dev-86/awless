@@ -5,39 +5,28 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/wallix/awless/cloud"
 	"github.com/wallix/awless/graph"
 )
 
-type Fetcher interface {
-	Cache
-	Fetch(context.Context) (*graph.Graph, error)
-	FetchByType(context.Context, string) (*graph.Graph, error)
-}
-
-type Cache interface {
-	Store(key string, val interface{})
-	Get(key string, funcs ...func() (interface{}, error)) (interface{}, error)
-	Reset()
-}
-
-type FetchResult struct {
+type fetchResult struct {
 	ResourceType string
 	Err          error
 	Resources    []*graph.Resource
 	Objects      interface{}
 }
 
-type Func func(context.Context, Cache) ([]*graph.Resource, interface{}, error)
+type Func func(context.Context, cloud.FetchCache) ([]*graph.Resource, interface{}, error)
 
 type Funcs map[string]Func
 
 type fetcher struct {
-	*cache
+	cache         *cache
 	fetchFuncs    map[string]Func
 	resourceTypes []string
 }
 
-func NewFetcher(funcs Funcs) *fetcher {
+func NewFetcher(funcs Funcs) cloud.Fetcher {
 	ftr := &fetcher{
 		fetchFuncs: make(Funcs),
 		cache:      newCache(),
@@ -49,8 +38,8 @@ func NewFetcher(funcs Funcs) *fetcher {
 	return ftr
 }
 
-func (f *fetcher) Fetch(ctx context.Context) (*graph.Graph, error) {
-	results := make(chan FetchResult, len(f.resourceTypes))
+func (f *fetcher) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
+	results := make(chan fetchResult, len(f.resourceTypes))
 	var wg sync.WaitGroup
 
 	for _, resType := range f.resourceTypes {
@@ -83,8 +72,8 @@ func (f *fetcher) Fetch(ctx context.Context) (*graph.Graph, error) {
 	return gph, nil
 }
 
-func (f *fetcher) FetchByType(ctx context.Context, resourceType string) (*graph.Graph, error) {
-	results := make(chan FetchResult)
+func (f *fetcher) FetchByType(ctx context.Context, resourceType string) (cloud.GraphAPI, error) {
+	results := make(chan fetchResult)
 	defer close(results)
 
 	go f.fetchResource(ctx, resourceType, results)
@@ -102,7 +91,11 @@ func (f *fetcher) FetchByType(ctx context.Context, resourceType string) (*graph.
 	}
 }
 
-func (f *fetcher) fetchResource(ctx context.Context, resourceType string, results chan<- FetchResult) {
+func (f *fetcher) Cache() cloud.FetchCache {
+	return f.cache
+}
+
+func (f *fetcher) fetchResource(ctx context.Context, resourceType string, results chan<- fetchResult) {
 	var err error
 	var objects interface{}
 	resources := make([]*graph.Resource, 0)
@@ -116,7 +109,7 @@ func (f *fetcher) fetchResource(ctx context.Context, resourceType string, result
 
 	f.cache.Store(fmt.Sprintf("%s_objects", resourceType), objects)
 
-	results <- FetchResult{
+	results <- fetchResult{
 		ResourceType: resourceType,
 		Err:          err,
 		Resources:    resources,

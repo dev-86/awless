@@ -99,13 +99,24 @@ const (
 	AppScalingPolicy string = "appscalingpolicy"
 )
 
+type Fetcher interface {
+	Fetch(context.Context) (GraphAPI, error)
+	FetchByType(context.Context, string) (GraphAPI, error)
+	Cache() FetchCache
+}
+
+type FetchCache interface {
+	Store(key string, val interface{})
+	Get(key string, funcs ...func() (interface{}, error)) (interface{}, error)
+	Reset()
+}
+
 type Service interface {
+	Fetcher
 	Region() string
 	Name() string
 	ResourceTypes() []string
 	IsSyncDisabled() bool
-	Fetch(context.Context) (GraphAPI, error)
-	FetchByType(context.Context, string) (GraphAPI, error)
 }
 
 type Services []Service

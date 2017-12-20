@@ -83,6 +83,7 @@ import (
   "github.com/aws/aws-sdk-go/service/{{ $api }}/{{ $api }}iface"
   {{- end }}
   {{- end }}
+  "github.com/wallix/awless/cloud"
   "github.com/wallix/awless/fetch"
   "github.com/wallix/awless/graph"
   "github.com/wallix/awless/aws/conv"
@@ -97,7 +98,7 @@ func Build{{ Title $service.Name }}FetchFuncs(conf *Config) fetch.Funcs {
 {{- range $index, $fetcher := $service.Fetchers }}
 	{{- if not $fetcher.ManualFetcher }}
 
-	funcs["{{ $fetcher.ResourceType }}"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["{{ $fetcher.ResourceType }}"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*{{ $fetcher.AWSType }}
 

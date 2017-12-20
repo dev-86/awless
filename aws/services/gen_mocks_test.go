@@ -99,6 +99,10 @@ func (m *mockEc2) ResourceTypes() []string {
 	return []string{}
 }
 
+func (m *mockEc2) Cache() cloud.FetchCache {
+	return nil
+}
+
 func (m *mockEc2) Fetch(context.Context) (cloud.GraphAPI, error) {
 	return nil, nil
 }
@@ -221,6 +225,10 @@ func (m *mockElbv2) ResourceTypes() []string {
 	return []string{}
 }
 
+func (m *mockElbv2) Cache() cloud.FetchCache {
+	return nil
+}
+
 func (m *mockElbv2) Fetch(context.Context) (cloud.GraphAPI, error) {
 	return nil, nil
 }
@@ -278,6 +286,10 @@ func (m *mockRds) ProviderAPI() string {
 
 func (m *mockRds) ResourceTypes() []string {
 	return []string{}
+}
+
+func (m *mockRds) Cache() cloud.FetchCache {
+	return nil
 }
 
 func (m *mockRds) Fetch(context.Context) (cloud.GraphAPI, error) {
@@ -351,6 +363,10 @@ func (m *mockAutoscaling) ProviderAPI() string {
 
 func (m *mockAutoscaling) ResourceTypes() []string {
 	return []string{}
+}
+
+func (m *mockAutoscaling) Cache() cloud.FetchCache {
+	return nil
 }
 
 func (m *mockAutoscaling) Fetch(context.Context) (cloud.GraphAPI, error) {
@@ -441,6 +457,10 @@ func (m *mockAcm) ResourceTypes() []string {
 	return []string{}
 }
 
+func (m *mockAcm) Cache() cloud.FetchCache {
+	return nil
+}
+
 func (m *mockAcm) Fetch(context.Context) (cloud.GraphAPI, error) {
 	return nil, nil
 }
@@ -501,6 +521,10 @@ func (m *mockIam) ProviderAPI() string {
 
 func (m *mockIam) ResourceTypes() []string {
 	return []string{}
+}
+
+func (m *mockIam) Cache() cloud.FetchCache {
+	return nil
 }
 
 func (m *mockIam) Fetch(context.Context) (cloud.GraphAPI, error) {
@@ -593,6 +617,10 @@ func (m *mockS3) ResourceTypes() []string {
 	return []string{}
 }
 
+func (m *mockS3) Cache() cloud.FetchCache {
+	return nil
+}
+
 func (m *mockS3) Fetch(context.Context) (cloud.GraphAPI, error) {
 	return nil, nil
 }
@@ -629,6 +657,10 @@ func (m *mockSns) ProviderAPI() string {
 
 func (m *mockSns) ResourceTypes() []string {
 	return []string{}
+}
+
+func (m *mockSns) Cache() cloud.FetchCache {
+	return nil
 }
 
 func (m *mockSns) Fetch(context.Context) (cloud.GraphAPI, error) {
@@ -703,6 +735,10 @@ func (m *mockSqs) ResourceTypes() []string {
 	return []string{}
 }
 
+func (m *mockSqs) Cache() cloud.FetchCache {
+	return nil
+}
+
 func (m *mockSqs) Fetch(context.Context) (cloud.GraphAPI, error) {
 	return nil, nil
 }
@@ -743,6 +779,10 @@ func (m *mockRoute53) ProviderAPI() string {
 
 func (m *mockRoute53) ResourceTypes() []string {
 	return []string{}
+}
+
+func (m *mockRoute53) Cache() cloud.FetchCache {
+	return nil
 }
 
 func (m *mockRoute53) Fetch(context.Context) (cloud.GraphAPI, error) {
@@ -799,6 +839,10 @@ func (m *mockLambda) ResourceTypes() []string {
 	return []string{}
 }
 
+func (m *mockLambda) Cache() cloud.FetchCache {
+	return nil
+}
+
 func (m *mockLambda) Fetch(context.Context) (cloud.GraphAPI, error) {
 	return nil, nil
 }
@@ -852,6 +896,10 @@ func (m *mockCloudwatch) ProviderAPI() string {
 
 func (m *mockCloudwatch) ResourceTypes() []string {
 	return []string{}
+}
+
+func (m *mockCloudwatch) Cache() cloud.FetchCache {
+	return nil
 }
 
 func (m *mockCloudwatch) Fetch(context.Context) (cloud.GraphAPI, error) {
@@ -925,6 +973,10 @@ func (m *mockCloudfront) ResourceTypes() []string {
 	return []string{}
 }
 
+func (m *mockCloudfront) Cache() cloud.FetchCache {
+	return nil
+}
+
 func (m *mockCloudfront) Fetch(context.Context) (cloud.GraphAPI, error) {
 	return nil, nil
 }
@@ -960,6 +1012,10 @@ func (m *mockCloudformation) ProviderAPI() string {
 
 func (m *mockCloudformation) ResourceTypes() []string {
 	return []string{}
+}
+
+func (m *mockCloudformation) Cache() cloud.FetchCache {
+	return nil
 }
 
 func (m *mockCloudformation) Fetch(context.Context) (cloud.GraphAPI, error) {
@@ -1014,6 +1070,10 @@ func (m *mockEcr) ProviderAPI() string {
 
 func (m *mockEcr) ResourceTypes() []string {
 	return []string{}
+}
+
+func (m *mockEcr) Cache() cloud.FetchCache {
+	return nil
 }
 
 func (m *mockEcr) Fetch(context.Context) (cloud.GraphAPI, error) {
@@ -1075,6 +1135,10 @@ func (m *mockEcs) ProviderAPI() string {
 
 func (m *mockEcs) ResourceTypes() []string {
 	return []string{}
+}
+
+func (m *mockEcs) Cache() cloud.FetchCache {
+	return nil
 }
 
 func (m *mockEcs) Fetch(context.Context) (cloud.GraphAPI, error) {

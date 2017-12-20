@@ -261,7 +261,7 @@ var APIPerResourceType = map[string]string{
 }
 
 type Infra struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
 	region  string
 	config  config
 	log     *logger.Logger
@@ -315,6 +315,10 @@ func NewInfra(sess *session.Session, awsconf config, log *logger.Logger) cloud.S
 	}
 }
 
+func (s *Infra) Cache() cloud.FetchCache {
+	return s.fetcher.Cache()
+}
+
 func (s *Infra) Name() string {
 	return "infra"
 }
@@ -365,7 +369,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 	allErrors := new(fetch.Error)
 
 	gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -383,16 +387,16 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	if s.config.getBool("aws.infra.instance.sync", true) {
-		list, err := s.fetcher.Get("instance_objects")
+		list, err := s.fetcher.Cache().Get("instance_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -404,7 +408,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.Instance) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -414,7 +418,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.subnet.sync", true) {
-		list, err := s.fetcher.Get("subnet_objects")
+		list, err := s.fetcher.Cache().Get("subnet_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -426,7 +430,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.Subnet) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -436,7 +440,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.vpc.sync", true) {
-		list, err := s.fetcher.Get("vpc_objects")
+		list, err := s.fetcher.Cache().Get("vpc_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -448,7 +452,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.Vpc) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -458,7 +462,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.keypair.sync", true) {
-		list, err := s.fetcher.Get("keypair_objects")
+		list, err := s.fetcher.Cache().Get("keypair_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -470,7 +474,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.KeyPairInfo) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -480,7 +484,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.securitygroup.sync", true) {
-		list, err := s.fetcher.Get("securitygroup_objects")
+		list, err := s.fetcher.Cache().Get("securitygroup_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -492,7 +496,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.SecurityGroup) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -502,7 +506,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.volume.sync", true) {
-		list, err := s.fetcher.Get("volume_objects")
+		list, err := s.fetcher.Cache().Get("volume_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -514,7 +518,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.Volume) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -524,7 +528,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.internetgateway.sync", true) {
-		list, err := s.fetcher.Get("internetgateway_objects")
+		list, err := s.fetcher.Cache().Get("internetgateway_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -536,7 +540,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.InternetGateway) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -546,7 +550,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.natgateway.sync", true) {
-		list, err := s.fetcher.Get("natgateway_objects")
+		list, err := s.fetcher.Cache().Get("natgateway_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -558,7 +562,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.NatGateway) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -568,7 +572,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.routetable.sync", true) {
-		list, err := s.fetcher.Get("routetable_objects")
+		list, err := s.fetcher.Cache().Get("routetable_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -580,7 +584,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.RouteTable) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -590,7 +594,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.availabilityzone.sync", true) {
-		list, err := s.fetcher.Get("availabilityzone_objects")
+		list, err := s.fetcher.Cache().Get("availabilityzone_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -602,7 +606,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.AvailabilityZone) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -612,7 +616,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.image.sync", true) {
-		list, err := s.fetcher.Get("image_objects")
+		list, err := s.fetcher.Cache().Get("image_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -624,7 +628,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.Image) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -634,7 +638,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.importimagetask.sync", true) {
-		list, err := s.fetcher.Get("importimagetask_objects")
+		list, err := s.fetcher.Cache().Get("importimagetask_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -646,7 +650,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.ImportImageTask) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -656,7 +660,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.elasticip.sync", true) {
-		list, err := s.fetcher.Get("elasticip_objects")
+		list, err := s.fetcher.Cache().Get("elasticip_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -668,7 +672,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.Address) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -678,7 +682,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.snapshot.sync", true) {
-		list, err := s.fetcher.Get("snapshot_objects")
+		list, err := s.fetcher.Cache().Get("snapshot_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -690,7 +694,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.Snapshot) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -700,7 +704,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.networkinterface.sync", true) {
-		list, err := s.fetcher.Get("networkinterface_objects")
+		list, err := s.fetcher.Cache().Get("networkinterface_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -712,7 +716,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ec2.NetworkInterface) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -722,7 +726,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.loadbalancer.sync", true) {
-		list, err := s.fetcher.Get("loadbalancer_objects")
+		list, err := s.fetcher.Cache().Get("loadbalancer_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -734,7 +738,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *elbv2.LoadBalancer) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -744,7 +748,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.targetgroup.sync", true) {
-		list, err := s.fetcher.Get("targetgroup_objects")
+		list, err := s.fetcher.Cache().Get("targetgroup_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -756,7 +760,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *elbv2.TargetGroup) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -766,7 +770,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.listener.sync", true) {
-		list, err := s.fetcher.Get("listener_objects")
+		list, err := s.fetcher.Cache().Get("listener_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -778,7 +782,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *elbv2.Listener) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -788,7 +792,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.database.sync", true) {
-		list, err := s.fetcher.Get("database_objects")
+		list, err := s.fetcher.Cache().Get("database_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -800,7 +804,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *rds.DBInstance) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -810,7 +814,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.dbsubnetgroup.sync", true) {
-		list, err := s.fetcher.Get("dbsubnetgroup_objects")
+		list, err := s.fetcher.Cache().Get("dbsubnetgroup_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -822,7 +826,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *rds.DBSubnetGroup) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -832,7 +836,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.launchconfiguration.sync", true) {
-		list, err := s.fetcher.Get("launchconfiguration_objects")
+		list, err := s.fetcher.Cache().Get("launchconfiguration_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -844,7 +848,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *autoscaling.LaunchConfiguration) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -854,7 +858,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.scalinggroup.sync", true) {
-		list, err := s.fetcher.Get("scalinggroup_objects")
+		list, err := s.fetcher.Cache().Get("scalinggroup_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -866,7 +870,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *autoscaling.Group) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -876,7 +880,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.scalingpolicy.sync", true) {
-		list, err := s.fetcher.Get("scalingpolicy_objects")
+		list, err := s.fetcher.Cache().Get("scalingpolicy_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -888,7 +892,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *autoscaling.ScalingPolicy) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -898,7 +902,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.repository.sync", true) {
-		list, err := s.fetcher.Get("repository_objects")
+		list, err := s.fetcher.Cache().Get("repository_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -910,7 +914,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ecr.Repository) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -920,7 +924,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.containercluster.sync", true) {
-		list, err := s.fetcher.Get("containercluster_objects")
+		list, err := s.fetcher.Cache().Get("containercluster_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -932,7 +936,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ecs.Cluster) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -942,7 +946,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.containertask.sync", true) {
-		list, err := s.fetcher.Get("containertask_objects")
+		list, err := s.fetcher.Cache().Get("containertask_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -954,7 +958,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ecs.TaskDefinition) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -964,7 +968,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.container.sync", true) {
-		list, err := s.fetcher.Get("container_objects")
+		list, err := s.fetcher.Cache().Get("container_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -976,7 +980,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ecs.Container) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -986,7 +990,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.containerinstance.sync", true) {
-		list, err := s.fetcher.Get("containerinstance_objects")
+		list, err := s.fetcher.Cache().Get("containerinstance_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -998,7 +1002,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *ecs.ContainerInstance) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1008,7 +1012,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.infra.certificate.sync", true) {
-		list, err := s.fetcher.Get("certificate_objects")
+		list, err := s.fetcher.Cache().Get("certificate_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1020,7 +1024,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *acm.CertificateSummary) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1049,7 +1053,7 @@ func (s *Infra) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 }
 
 func (s *Infra) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 
@@ -1058,7 +1062,7 @@ func (s *Infra) IsSyncDisabled() bool {
 }
 
 type Access struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
 	region  string
 	config  config
 	log     *logger.Logger
@@ -1086,6 +1090,10 @@ func NewAccess(sess *session.Session, awsconf config, log *logger.Logger) cloud.
 		region:  region,
 		log:     log,
 	}
+}
+
+func (s *Access) Cache() cloud.FetchCache {
+	return s.fetcher.Cache()
 }
 
 func (s *Access) Name() string {
@@ -1116,7 +1124,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 	allErrors := new(fetch.Error)
 
 	gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -1134,16 +1142,16 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	if s.config.getBool("aws.access.user.sync", true) {
-		list, err := s.fetcher.Get("user_objects")
+		list, err := s.fetcher.Cache().Get("user_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1155,7 +1163,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *iam.UserDetail) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1165,7 +1173,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.access.group.sync", true) {
-		list, err := s.fetcher.Get("group_objects")
+		list, err := s.fetcher.Cache().Get("group_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1177,7 +1185,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *iam.GroupDetail) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1187,7 +1195,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.access.role.sync", true) {
-		list, err := s.fetcher.Get("role_objects")
+		list, err := s.fetcher.Cache().Get("role_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1199,7 +1207,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *iam.RoleDetail) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1209,7 +1217,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.access.policy.sync", true) {
-		list, err := s.fetcher.Get("policy_objects")
+		list, err := s.fetcher.Cache().Get("policy_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1221,7 +1229,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *iam.Policy) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1231,7 +1239,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.access.accesskey.sync", true) {
-		list, err := s.fetcher.Get("accesskey_objects")
+		list, err := s.fetcher.Cache().Get("accesskey_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1243,7 +1251,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *iam.AccessKeyMetadata) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1253,7 +1261,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.access.instanceprofile.sync", true) {
-		list, err := s.fetcher.Get("instanceprofile_objects")
+		list, err := s.fetcher.Cache().Get("instanceprofile_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1265,7 +1273,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *iam.InstanceProfile) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1275,7 +1283,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.access.mfadevice.sync", true) {
-		list, err := s.fetcher.Get("mfadevice_objects")
+		list, err := s.fetcher.Cache().Get("mfadevice_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1287,7 +1295,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *iam.VirtualMFADevice) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1316,7 +1324,7 @@ func (s *Access) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 }
 
 func (s *Access) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 
@@ -1325,7 +1333,7 @@ func (s *Access) IsSyncDisabled() bool {
 }
 
 type Storage struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
 	region  string
 	config  config
 	log     *logger.Logger
@@ -1351,6 +1359,10 @@ func NewStorage(sess *session.Session, awsconf config, log *logger.Logger) cloud
 	}
 }
 
+func (s *Storage) Cache() cloud.FetchCache {
+	return s.fetcher.Cache()
+}
+
 func (s *Storage) Name() string {
 	return "storage"
 }
@@ -1374,7 +1386,7 @@ func (s *Storage) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 	allErrors := new(fetch.Error)
 
 	gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -1392,16 +1404,16 @@ func (s *Storage) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	if s.config.getBool("aws.storage.bucket.sync", true) {
-		list, err := s.fetcher.Get("bucket_objects")
+		list, err := s.fetcher.Cache().Get("bucket_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1413,7 +1425,7 @@ func (s *Storage) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *s3.Bucket) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1423,7 +1435,7 @@ func (s *Storage) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.storage.s3object.sync", true) {
-		list, err := s.fetcher.Get("s3object_objects")
+		list, err := s.fetcher.Cache().Get("s3object_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1435,7 +1447,7 @@ func (s *Storage) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *s3.Object) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1464,7 +1476,7 @@ func (s *Storage) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 }
 
 func (s *Storage) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 
@@ -1473,7 +1485,7 @@ func (s *Storage) IsSyncDisabled() bool {
 }
 
 type Messaging struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
 	region  string
 	config  config
 	log     *logger.Logger
@@ -1503,6 +1515,10 @@ func NewMessaging(sess *session.Session, awsconf config, log *logger.Logger) clo
 	}
 }
 
+func (s *Messaging) Cache() cloud.FetchCache {
+	return s.fetcher.Cache()
+}
+
 func (s *Messaging) Name() string {
 	return "messaging"
 }
@@ -1527,7 +1543,7 @@ func (s *Messaging) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 	allErrors := new(fetch.Error)
 
 	gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -1545,16 +1561,16 @@ func (s *Messaging) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	if s.config.getBool("aws.messaging.subscription.sync", true) {
-		list, err := s.fetcher.Get("subscription_objects")
+		list, err := s.fetcher.Cache().Get("subscription_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1566,7 +1582,7 @@ func (s *Messaging) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *sns.Subscription) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1576,7 +1592,7 @@ func (s *Messaging) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.messaging.topic.sync", true) {
-		list, err := s.fetcher.Get("topic_objects")
+		list, err := s.fetcher.Cache().Get("topic_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1588,7 +1604,7 @@ func (s *Messaging) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *sns.Topic) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1598,7 +1614,7 @@ func (s *Messaging) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.messaging.queue.sync", true) {
-		list, err := s.fetcher.Get("queue_objects")
+		list, err := s.fetcher.Cache().Get("queue_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1610,7 +1626,7 @@ func (s *Messaging) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *string) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1639,7 +1655,7 @@ func (s *Messaging) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 }
 
 func (s *Messaging) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 
@@ -1648,7 +1664,7 @@ func (s *Messaging) IsSyncDisabled() bool {
 }
 
 type Dns struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
 	region  string
 	config  config
 	log     *logger.Logger
@@ -1674,6 +1690,10 @@ func NewDns(sess *session.Session, awsconf config, log *logger.Logger) cloud.Ser
 	}
 }
 
+func (s *Dns) Cache() cloud.FetchCache {
+	return s.fetcher.Cache()
+}
+
 func (s *Dns) Name() string {
 	return "dns"
 }
@@ -1697,7 +1717,7 @@ func (s *Dns) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 	allErrors := new(fetch.Error)
 
 	gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -1715,16 +1735,16 @@ func (s *Dns) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	if s.config.getBool("aws.dns.zone.sync", true) {
-		list, err := s.fetcher.Get("zone_objects")
+		list, err := s.fetcher.Cache().Get("zone_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1736,7 +1756,7 @@ func (s *Dns) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *route53.HostedZone) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1746,7 +1766,7 @@ func (s *Dns) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.dns.record.sync", true) {
-		list, err := s.fetcher.Get("record_objects")
+		list, err := s.fetcher.Cache().Get("record_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1758,7 +1778,7 @@ func (s *Dns) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *route53.ResourceRecordSet) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1787,7 +1807,7 @@ func (s *Dns) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 }
 
 func (s *Dns) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 
@@ -1796,7 +1816,7 @@ func (s *Dns) IsSyncDisabled() bool {
 }
 
 type Lambda struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
 	region  string
 	config  config
 	log     *logger.Logger
@@ -1822,6 +1842,10 @@ func NewLambda(sess *session.Session, awsconf config, log *logger.Logger) cloud.
 	}
 }
 
+func (s *Lambda) Cache() cloud.FetchCache {
+	return s.fetcher.Cache()
+}
+
 func (s *Lambda) Name() string {
 	return "lambda"
 }
@@ -1844,7 +1868,7 @@ func (s *Lambda) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 	allErrors := new(fetch.Error)
 
 	gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -1862,16 +1886,16 @@ func (s *Lambda) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	if s.config.getBool("aws.lambda.function.sync", true) {
-		list, err := s.fetcher.Get("function_objects")
+		list, err := s.fetcher.Cache().Get("function_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -1883,7 +1907,7 @@ func (s *Lambda) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *lambda.FunctionConfiguration) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -1912,7 +1936,7 @@ func (s *Lambda) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 }
 
 func (s *Lambda) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 
@@ -1921,7 +1945,7 @@ func (s *Lambda) IsSyncDisabled() bool {
 }
 
 type Monitoring struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
 	region  string
 	config  config
 	log     *logger.Logger
@@ -1947,6 +1971,10 @@ func NewMonitoring(sess *session.Session, awsconf config, log *logger.Logger) cl
 	}
 }
 
+func (s *Monitoring) Cache() cloud.FetchCache {
+	return s.fetcher.Cache()
+}
+
 func (s *Monitoring) Name() string {
 	return "monitoring"
 }
@@ -1970,7 +1998,7 @@ func (s *Monitoring) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 	allErrors := new(fetch.Error)
 
 	gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -1988,16 +2016,16 @@ func (s *Monitoring) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	if s.config.getBool("aws.monitoring.metric.sync", true) {
-		list, err := s.fetcher.Get("metric_objects")
+		list, err := s.fetcher.Cache().Get("metric_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -2009,7 +2037,7 @@ func (s *Monitoring) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *cloudwatch.Metric) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -2019,7 +2047,7 @@ func (s *Monitoring) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 	if s.config.getBool("aws.monitoring.alarm.sync", true) {
-		list, err := s.fetcher.Get("alarm_objects")
+		list, err := s.fetcher.Cache().Get("alarm_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -2031,7 +2059,7 @@ func (s *Monitoring) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *cloudwatch.MetricAlarm) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -2060,7 +2088,7 @@ func (s *Monitoring) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 }
 
 func (s *Monitoring) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 
@@ -2069,7 +2097,7 @@ func (s *Monitoring) IsSyncDisabled() bool {
 }
 
 type Cdn struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
 	region  string
 	config  config
 	log     *logger.Logger
@@ -2095,6 +2123,10 @@ func NewCdn(sess *session.Session, awsconf config, log *logger.Logger) cloud.Ser
 	}
 }
 
+func (s *Cdn) Cache() cloud.FetchCache {
+	return s.fetcher.Cache()
+}
+
 func (s *Cdn) Name() string {
 	return "cdn"
 }
@@ -2117,7 +2149,7 @@ func (s *Cdn) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 	allErrors := new(fetch.Error)
 
 	gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -2135,16 +2167,16 @@ func (s *Cdn) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	if s.config.getBool("aws.cdn.distribution.sync", true) {
-		list, err := s.fetcher.Get("distribution_objects")
+		list, err := s.fetcher.Cache().Get("distribution_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -2156,7 +2188,7 @@ func (s *Cdn) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *cloudfront.DistributionSummary) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -2185,7 +2217,7 @@ func (s *Cdn) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 }
 
 func (s *Cdn) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 
@@ -2194,7 +2226,7 @@ func (s *Cdn) IsSyncDisabled() bool {
 }
 
 type Cloudformation struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
 	region  string
 	config  config
 	log     *logger.Logger
@@ -2220,6 +2252,10 @@ func NewCloudformation(sess *session.Session, awsconf config, log *logger.Logger
 	}
 }
 
+func (s *Cloudformation) Cache() cloud.FetchCache {
+	return s.fetcher.Cache()
+}
+
 func (s *Cloudformation) Name() string {
 	return "cloudformation"
 }
@@ -2242,7 +2278,7 @@ func (s *Cloudformation) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 	allErrors := new(fetch.Error)
 
 	gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -2260,16 +2296,16 @@ func (s *Cloudformation) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	if s.config.getBool("aws.cloudformation.stack.sync", true) {
-		list, err := s.fetcher.Get("stack_objects")
+		list, err := s.fetcher.Cache().Get("stack_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -2281,7 +2317,7 @@ func (s *Cloudformation) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *cloudformation.Stack) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -2310,7 +2346,7 @@ func (s *Cloudformation) Fetch(ctx context.Context) (cloud.GraphAPI, error) {
 }
 
 func (s *Cloudformation) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 

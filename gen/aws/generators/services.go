@@ -134,7 +134,7 @@ var APIPerResourceType = map[string]string {
 
 {{ range $index, $service := . }}
 type {{ Title $service.Name }} struct {
-	fetcher fetch.Fetcher
+	fetcher cloud.Fetcher
   region string
 	config config
 	log *logger.Logger
@@ -174,6 +174,11 @@ func New{{ Title $service.Name }}(sess *session.Session, awsconf config, log *lo
   }
 }
 
+func (s *{{ Title $service.Name }}) Cache() cloud.FetchCache {
+  return s.fetcher.Cache()
+}
+
+
 func (s *{{ Title $service.Name }}) Name() string {
   return "{{ $service.Name }}"
 }
@@ -198,7 +203,7 @@ func (s *{{ Title $service.Name }}) Fetch(ctx context.Context) (cloud.GraphAPI, 
 	allErrors := new(fetch.Error)
 
   gph, err := s.fetcher.Fetch(context.WithValue(ctx, "region", s.region))
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
 	
 	for _, e := range *fetch.WrapError(err) {
 		switch ee := e.(type) {
@@ -216,18 +221,18 @@ func (s *{{ Title $service.Name }}) Fetch(ctx context.Context) (cloud.GraphAPI, 
 		}
 	}
 
-	if err := gph.AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
+	if err := gph.(*graph.Graph).AddResource(graph.InitResource(cloud.Region, s.region)); err != nil {
 		return gph, err
 	}
 
-	snap := gph.AsRDFGraphSnaphot()
+	snap := gph.(*graph.Graph).AsRDFGraphSnaphot()
 
 	errc := make(chan error)
 	var wg sync.WaitGroup
 
 	{{- range $index, $fetcher := $service.Fetchers }}
 	if s.config.getBool("aws.{{ $service.Name }}.{{ $fetcher.ResourceType }}.sync", true) {
-		list, err := s.fetcher.Get("{{ $fetcher.ResourceType }}_objects")
+		list, err := s.fetcher.Cache().Get("{{ $fetcher.ResourceType }}_objects")
 		if err != nil {
 			return gph, err
 		}
@@ -239,7 +244,7 @@ func (s *{{ Title $service.Name }}) Fetch(ctx context.Context) (cloud.GraphAPI, 
 				wg.Add(1)
 				go func(f addParentFn, snap tstore.RDFGraph, region string, res *{{ $fetcher.AWSType }}) {
 					defer wg.Done()
-					err := f(gph, snap, region, res)
+					err := f(gph.(*graph.Graph), snap, region, res)
 					if err != nil {
 						errc <- err
 						return
@@ -269,7 +274,7 @@ func (s *{{ Title $service.Name }}) Fetch(ctx context.Context) (cloud.GraphAPI, 
 }
 
 func (s *{{ Title $service.Name }}) FetchByType(ctx context.Context, t string) (cloud.GraphAPI, error) {
-	defer s.fetcher.Reset()
+	defer s.fetcher.Cache().Reset()
   return s.fetcher.FetchByType(context.WithValue(ctx, "region", s.region), t)
 }
 

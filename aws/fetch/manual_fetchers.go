@@ -25,7 +25,7 @@ import (
 )
 
 func addManualInfraFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
-	funcs["containerinstance"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["containerinstance"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var objects []*ecs.ContainerInstance
 		var resources []*graph.Resource
 
@@ -79,7 +79,7 @@ func addManualInfraFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 		return resources, objects, nil
 	}
 
-	funcs["container"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["container"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var objects []*ecs.Container
 		var resources []*graph.Resource
 
@@ -138,7 +138,7 @@ func addManualInfraFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 		return resources, objects, nil
 	}
 
-	funcs["containertask"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["containertask"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var objects []*ecs.TaskDefinition
 		var resources []*graph.Resource
 
@@ -269,7 +269,7 @@ func addManualInfraFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 		return resources, objects, err
 	}
 
-	funcs["containercluster"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["containercluster"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ecs.Cluster
 
@@ -306,7 +306,7 @@ func addManualInfraFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 		return resources, objects, nil
 	}
 
-	funcs["listener"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["listener"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var objects []*elbv2.Listener
 		var resources []*graph.Resource
 
@@ -370,7 +370,7 @@ func addManualInfraFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 }
 
 func addManualAccessFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
-	funcs["user"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["user"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*iam.UserDetail
 
@@ -459,7 +459,7 @@ func addManualAccessFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 		}
 	}
 
-	funcs["policy"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["policy"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*iam.Policy
 
@@ -526,7 +526,7 @@ func addManualAccessFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 			}
 		}
 	}
-	funcs["accesskey"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["accesskey"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*iam.AccessKeyMetadata
 
@@ -611,7 +611,7 @@ func addManualAccessFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 	}
 }
 func addManualStorageFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
-	funcs["bucket"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["bucket"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*s3.Bucket
 
@@ -643,7 +643,7 @@ func addManualStorageFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 		return resources, objects, err
 	}
 
-	funcs["s3object"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["s3object"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var objects []*s3.Object
 		var resources []*graph.Resource
 
@@ -675,7 +675,7 @@ func addManualStorageFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 	}
 }
 func addManualMessagingFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
-	funcs["queue"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["queue"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var objects []*string
 		var resources []*graph.Resource
 
@@ -778,7 +778,7 @@ func addManualMessagingFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
 	}
 }
 func addManualDnsFetchFuncs(conf *Config, funcs map[string]fetch.Func) {
-	funcs["record"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["record"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var objects []*route53.ResourceRecordSet
 		var resources []*graph.Resource
 

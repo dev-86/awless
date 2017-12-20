@@ -7,7 +7,7 @@ import (
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/aws/aws-sdk-go/service/ecs/ecsiface"
-	"github.com/wallix/awless/fetch"
+	"github.com/wallix/awless/cloud"
 )
 
 func getClustersNames(ctx context.Context, api ecsiface.ECSAPI) (res []*string, err error) {
@@ -18,7 +18,7 @@ func getClustersNames(ctx context.Context, api ecsiface.ECSAPI) (res []*string, 
 	return
 }
 
-func getAllTasks(ctx context.Context, cache fetch.Cache, api ecsiface.ECSAPI) (res []*ecs.Task, err error) {
+func getAllTasks(ctx context.Context, cache cloud.FetchCache, api ecsiface.ECSAPI) (res []*ecs.Task, err error) {
 	var clusterArns []*string
 
 	if val, e := cache.Get("getClustersNames", func() (interface{}, error) {

@@ -71,6 +71,7 @@ type mockService struct {
 func (s *mockService) Region() string                                { return s.region }
 func (s *mockService) Name() string                                  { return s.name }
 func (s *mockService) ResourceTypes() []string                       { return []string{} }
+func (s *mockService) Cache() cloud.FetchCache                       { return nil }
 func (s *mockService) Fetch(context.Context) (cloud.GraphAPI, error) { return s.g, nil }
 func (s *mockService) IsSyncDisabled() bool                          { return false }
 func (s *mockService) FetchByType(context.Context, string) (cloud.GraphAPI, error) {

@@ -106,6 +106,10 @@ func (m * {{ $mock.Name }}) ResourceTypes() []string {
 	return []string{}
 }
 
+func (m * {{ $mock.Name }}) Cache() cloud.FetchCache {
+	return nil
+}
+
 func (m * {{ $mock.Name }}) Fetch(context.Context) (cloud.GraphAPI, error) {
 	return nil, nil
 }

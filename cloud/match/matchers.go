@@ -21,10 +21,15 @@ import (
 	"strings"
 
 	"github.com/wallix/awless/cloud"
+	"github.com/wallix/awless/cloud/properties"
 )
 
 type and struct {
 	matchers []cloud.Matcher
+}
+
+func ID(id string) cloud.Matcher {
+	return Property(properties.ID, id)
 }
 
 func (m and) Match(r cloud.Resource) bool {

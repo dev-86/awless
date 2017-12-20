@@ -8,12 +8,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/wallix/awless/aws/conv"
+	"github.com/wallix/awless/cloud"
 	"github.com/wallix/awless/cloud/rdf"
-	"github.com/wallix/awless/fetch"
 	"github.com/wallix/awless/graph"
 )
 
-func forEachBucketParallel(ctx context.Context, cache fetch.Cache, api s3iface.S3API, f func(b *s3.Bucket) error) error {
+func forEachBucketParallel(ctx context.Context, cache cloud.FetchCache, api s3iface.S3API, f func(b *s3.Bucket) error) error {
 	var buckets []*s3.Bucket
 
 	if val, e := cache.Get("getBucketsPerRegion", func() (interface{}, error) {

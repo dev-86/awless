@@ -38,6 +38,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/wallix/awless/aws/conv"
+	"github.com/wallix/awless/cloud"
 	"github.com/wallix/awless/fetch"
 	"github.com/wallix/awless/graph"
 )
@@ -47,7 +48,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 
 	addManualInfraFetchFuncs(conf, funcs)
 
-	funcs["instance"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["instance"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.Instance
 
@@ -80,7 +81,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["subnet"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["subnet"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.Subnet
 
@@ -106,7 +107,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["vpc"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["vpc"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.Vpc
 
@@ -132,7 +133,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["keypair"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["keypair"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.KeyPairInfo
 
@@ -158,7 +159,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["securitygroup"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["securitygroup"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.SecurityGroup
 
@@ -184,7 +185,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["volume"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["volume"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.Volume
 
@@ -215,7 +216,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["internetgateway"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["internetgateway"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.InternetGateway
 
@@ -241,7 +242,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["natgateway"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["natgateway"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.NatGateway
 
@@ -267,7 +268,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["routetable"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["routetable"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.RouteTable
 
@@ -293,7 +294,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["availabilityzone"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["availabilityzone"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.AvailabilityZone
 
@@ -319,7 +320,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["image"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["image"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.Image
 
@@ -345,7 +346,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["importimagetask"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["importimagetask"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.ImportImageTask
 
@@ -371,7 +372,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["elasticip"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["elasticip"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.Address
 
@@ -397,7 +398,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["snapshot"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["snapshot"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.Snapshot
 
@@ -428,7 +429,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["networkinterface"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["networkinterface"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ec2.NetworkInterface
 
@@ -454,7 +455,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["loadbalancer"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["loadbalancer"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*elbv2.LoadBalancer
 
@@ -485,7 +486,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["targetgroup"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["targetgroup"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*elbv2.TargetGroup
 
@@ -511,7 +512,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, nil
 	}
 
-	funcs["database"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["database"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*rds.DBInstance
 
@@ -542,7 +543,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["dbsubnetgroup"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["dbsubnetgroup"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*rds.DBSubnetGroup
 
@@ -573,7 +574,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["launchconfiguration"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["launchconfiguration"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*autoscaling.LaunchConfiguration
 
@@ -604,7 +605,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["scalinggroup"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["scalinggroup"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*autoscaling.Group
 
@@ -635,7 +636,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["scalingpolicy"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["scalingpolicy"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*autoscaling.ScalingPolicy
 
@@ -666,7 +667,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["repository"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["repository"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*ecr.Repository
 
@@ -697,7 +698,7 @@ func BuildInfraFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["certificate"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["certificate"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*acm.CertificateSummary
 
@@ -734,7 +735,7 @@ func BuildAccessFetchFuncs(conf *Config) fetch.Funcs {
 
 	addManualAccessFetchFuncs(conf, funcs)
 
-	funcs["group"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["group"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*iam.GroupDetail
 
@@ -765,7 +766,7 @@ func BuildAccessFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["role"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["role"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*iam.RoleDetail
 
@@ -796,7 +797,7 @@ func BuildAccessFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["instanceprofile"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["instanceprofile"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*iam.InstanceProfile
 
@@ -827,7 +828,7 @@ func BuildAccessFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["mfadevice"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["mfadevice"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*iam.VirtualMFADevice
 
@@ -870,7 +871,7 @@ func BuildMessagingFetchFuncs(conf *Config) fetch.Funcs {
 
 	addManualMessagingFetchFuncs(conf, funcs)
 
-	funcs["subscription"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["subscription"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*sns.Subscription
 
@@ -901,7 +902,7 @@ func BuildMessagingFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["topic"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["topic"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*sns.Topic
 
@@ -938,7 +939,7 @@ func BuildDnsFetchFuncs(conf *Config) fetch.Funcs {
 
 	addManualDnsFetchFuncs(conf, funcs)
 
-	funcs["zone"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["zone"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*route53.HostedZone
 
@@ -975,7 +976,7 @@ func BuildLambdaFetchFuncs(conf *Config) fetch.Funcs {
 
 	addManualLambdaFetchFuncs(conf, funcs)
 
-	funcs["function"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["function"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*lambda.FunctionConfiguration
 
@@ -1012,7 +1013,7 @@ func BuildMonitoringFetchFuncs(conf *Config) fetch.Funcs {
 
 	addManualMonitoringFetchFuncs(conf, funcs)
 
-	funcs["metric"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["metric"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*cloudwatch.Metric
 
@@ -1043,7 +1044,7 @@ func BuildMonitoringFetchFuncs(conf *Config) fetch.Funcs {
 		return resources, objects, badResErr
 	}
 
-	funcs["alarm"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["alarm"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*cloudwatch.MetricAlarm
 
@@ -1080,7 +1081,7 @@ func BuildCdnFetchFuncs(conf *Config) fetch.Funcs {
 
 	addManualCdnFetchFuncs(conf, funcs)
 
-	funcs["distribution"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["distribution"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*cloudfront.DistributionSummary
 
@@ -1117,7 +1118,7 @@ func BuildCloudformationFetchFuncs(conf *Config) fetch.Funcs {
 
 	addManualCloudformationFetchFuncs(conf, funcs)
 
-	funcs["stack"] = func(ctx context.Context, cache fetch.Cache) ([]*graph.Resource, interface{}, error) {
+	funcs["stack"] = func(ctx context.Context, cache cloud.FetchCache) ([]*graph.Resource, interface{}, error) {
 		var resources []*graph.Resource
 		var objects []*cloudformation.Stack
 
