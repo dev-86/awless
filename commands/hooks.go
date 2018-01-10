@@ -78,10 +78,12 @@ func initCloudServicesHook(cmd *cobra.Command, args []string) error {
 	if localGlobalFlag {
 		return nil
 	}
-	awsConf := config.GetConfigWithPrefix("aws.")
-	logger.Verbosef("awless %s - loading AWS session with profile '%v' and region '%v'", config.Version, awsConf[config.ProfileConfigKey], awsConf[config.RegionConfigKey])
 
-	if err := awsservices.Init(awsConf, logger.DefaultLogger, config.SetProfileCallback, networkMonitorFlag); err != nil {
+	profile, region := config.GetAWSProfile(), config.GetAWSRegion()
+
+	logger.Verbosef("awless %s - loading AWS session with profile '%s' and region '%s'", config.Version, profile, region)
+
+	if err := awsservices.Init(profile, region, config.GetConfigWithPrefix("aws."), logger.DefaultLogger, config.SetProfileCallback, networkMonitorFlag); err != nil {
 		return err
 	}
 
@@ -91,7 +93,7 @@ func initCloudServicesHook(cmd *cobra.Command, args []string) error {
 			services = append(services, s)
 		}
 		if !noSyncGlobalFlag {
-			logger.Infof("Syncing new region '%s'... (disable with --no-sync global flag)", awsConf[config.RegionConfigKey])
+			logger.Infof("Syncing new region '%s'... (disable with --no-sync global flag)", region)
 			sync.NewSyncer(logger.DefaultLogger).Sync(services...)
 		}
 	}
