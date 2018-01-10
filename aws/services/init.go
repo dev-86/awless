@@ -69,7 +69,7 @@ func Init(conf map[string]interface{}, log *logger.Logger, profileSetterCallback
 		Log:  log,
 		Sess: sess,
 		Graph: &cloud.LazyGraph{LoadingFunc: func() cloud.GraphAPI {
-			g, err := sync.LoadLocalGraphs(region)
+			g, err := sync.LoadLocalGraphs(awsconf.profile(), region)
 			if err != nil || g == nil {
 				g = graph.NewGraph()
 			}

@@ -135,7 +135,7 @@ var APIPerResourceType = map[string]string {
 {{ range $index, $service := . }}
 type {{ Title $service.Name }} struct {
 	fetcher fetch.Fetcher
-  region string
+  region, profile string
 	config config
 	log *logger.Logger
 	{{- range $, $api := $service.Api }}
@@ -148,8 +148,7 @@ func New{{ Title $service.Name }}(sess *session.Session, awsconf config, log *lo
 	region := "global"
 	{{- else}}
 	region := awssdk.StringValue(sess.Config.Region)
-	{{- end}}
-
+	{{- end}}	
 
 	{{- range $, $api := $service.Api }}
 		{{$api }}API := {{ $api }}.New(sess)
@@ -170,6 +169,7 @@ func New{{ Title $service.Name }}(sess *session.Session, awsconf config, log *lo
 		fetcher: fetch.NewFetcher(awsfetch.Build{{ Title $service.Name }}FetchFuncs(fetchConfig)),
 		config: awsconf,
 		region: region,
+		profile: awsconf.profile(),
 		log: log,
   }
 }
@@ -180,6 +180,10 @@ func (s *{{ Title $service.Name }}) Name() string {
 
 func (s *{{ Title $service.Name }}) Region() string {
   return s.region
+}
+
+func (s *{{ Title $service.Name }}) Profile() string {
+  return s.profile
 }
 
 func (s *{{ Title $service.Name }}) ResourceTypes() []string {

@@ -261,10 +261,10 @@ var APIPerResourceType = map[string]string{
 }
 
 type Infra struct {
-	fetcher fetch.Fetcher
-	region  string
-	config  config
-	log     *logger.Logger
+	fetcher         fetch.Fetcher
+	region, profile string
+	config          config
+	log             *logger.Logger
 	ec2iface.EC2API
 	elbv2iface.ELBV2API
 	rdsiface.RDSAPI
@@ -311,6 +311,7 @@ func NewInfra(sess *session.Session, awsconf config, log *logger.Logger) cloud.S
 		fetcher: fetch.NewFetcher(awsfetch.BuildInfraFetchFuncs(fetchConfig)),
 		config:  awsconf,
 		region:  region,
+		profile: awsconf.profile(),
 		log:     log,
 	}
 }
@@ -321,6 +322,10 @@ func (s *Infra) Name() string {
 
 func (s *Infra) Region() string {
 	return s.region
+}
+
+func (s *Infra) Profile() string {
+	return s.profile
 }
 
 func (s *Infra) ResourceTypes() []string {
@@ -1058,10 +1063,10 @@ func (s *Infra) IsSyncDisabled() bool {
 }
 
 type Access struct {
-	fetcher fetch.Fetcher
-	region  string
-	config  config
-	log     *logger.Logger
+	fetcher         fetch.Fetcher
+	region, profile string
+	config          config
+	log             *logger.Logger
 	iamiface.IAMAPI
 	stsiface.STSAPI
 }
@@ -1084,6 +1089,7 @@ func NewAccess(sess *session.Session, awsconf config, log *logger.Logger) cloud.
 		fetcher: fetch.NewFetcher(awsfetch.BuildAccessFetchFuncs(fetchConfig)),
 		config:  awsconf,
 		region:  region,
+		profile: awsconf.profile(),
 		log:     log,
 	}
 }
@@ -1094,6 +1100,10 @@ func (s *Access) Name() string {
 
 func (s *Access) Region() string {
 	return s.region
+}
+
+func (s *Access) Profile() string {
+	return s.profile
 }
 
 func (s *Access) ResourceTypes() []string {
@@ -1325,10 +1335,10 @@ func (s *Access) IsSyncDisabled() bool {
 }
 
 type Storage struct {
-	fetcher fetch.Fetcher
-	region  string
-	config  config
-	log     *logger.Logger
+	fetcher         fetch.Fetcher
+	region, profile string
+	config          config
+	log             *logger.Logger
 	s3iface.S3API
 }
 
@@ -1347,6 +1357,7 @@ func NewStorage(sess *session.Session, awsconf config, log *logger.Logger) cloud
 		fetcher: fetch.NewFetcher(awsfetch.BuildStorageFetchFuncs(fetchConfig)),
 		config:  awsconf,
 		region:  region,
+		profile: awsconf.profile(),
 		log:     log,
 	}
 }
@@ -1357,6 +1368,10 @@ func (s *Storage) Name() string {
 
 func (s *Storage) Region() string {
 	return s.region
+}
+
+func (s *Storage) Profile() string {
+	return s.profile
 }
 
 func (s *Storage) ResourceTypes() []string {
@@ -1473,10 +1488,10 @@ func (s *Storage) IsSyncDisabled() bool {
 }
 
 type Messaging struct {
-	fetcher fetch.Fetcher
-	region  string
-	config  config
-	log     *logger.Logger
+	fetcher         fetch.Fetcher
+	region, profile string
+	config          config
+	log             *logger.Logger
 	snsiface.SNSAPI
 	sqsiface.SQSAPI
 }
@@ -1499,6 +1514,7 @@ func NewMessaging(sess *session.Session, awsconf config, log *logger.Logger) clo
 		fetcher: fetch.NewFetcher(awsfetch.BuildMessagingFetchFuncs(fetchConfig)),
 		config:  awsconf,
 		region:  region,
+		profile: awsconf.profile(),
 		log:     log,
 	}
 }
@@ -1509,6 +1525,10 @@ func (s *Messaging) Name() string {
 
 func (s *Messaging) Region() string {
 	return s.region
+}
+
+func (s *Messaging) Profile() string {
+	return s.profile
 }
 
 func (s *Messaging) ResourceTypes() []string {
@@ -1648,10 +1668,10 @@ func (s *Messaging) IsSyncDisabled() bool {
 }
 
 type Dns struct {
-	fetcher fetch.Fetcher
-	region  string
-	config  config
-	log     *logger.Logger
+	fetcher         fetch.Fetcher
+	region, profile string
+	config          config
+	log             *logger.Logger
 	route53iface.Route53API
 }
 
@@ -1670,6 +1690,7 @@ func NewDns(sess *session.Session, awsconf config, log *logger.Logger) cloud.Ser
 		fetcher:    fetch.NewFetcher(awsfetch.BuildDnsFetchFuncs(fetchConfig)),
 		config:     awsconf,
 		region:     region,
+		profile:    awsconf.profile(),
 		log:        log,
 	}
 }
@@ -1680,6 +1701,10 @@ func (s *Dns) Name() string {
 
 func (s *Dns) Region() string {
 	return s.region
+}
+
+func (s *Dns) Profile() string {
+	return s.profile
 }
 
 func (s *Dns) ResourceTypes() []string {
@@ -1796,10 +1821,10 @@ func (s *Dns) IsSyncDisabled() bool {
 }
 
 type Lambda struct {
-	fetcher fetch.Fetcher
-	region  string
-	config  config
-	log     *logger.Logger
+	fetcher         fetch.Fetcher
+	region, profile string
+	config          config
+	log             *logger.Logger
 	lambdaiface.LambdaAPI
 }
 
@@ -1818,6 +1843,7 @@ func NewLambda(sess *session.Session, awsconf config, log *logger.Logger) cloud.
 		fetcher:   fetch.NewFetcher(awsfetch.BuildLambdaFetchFuncs(fetchConfig)),
 		config:    awsconf,
 		region:    region,
+		profile:   awsconf.profile(),
 		log:       log,
 	}
 }
@@ -1828,6 +1854,10 @@ func (s *Lambda) Name() string {
 
 func (s *Lambda) Region() string {
 	return s.region
+}
+
+func (s *Lambda) Profile() string {
+	return s.profile
 }
 
 func (s *Lambda) ResourceTypes() []string {
@@ -1921,10 +1951,10 @@ func (s *Lambda) IsSyncDisabled() bool {
 }
 
 type Monitoring struct {
-	fetcher fetch.Fetcher
-	region  string
-	config  config
-	log     *logger.Logger
+	fetcher         fetch.Fetcher
+	region, profile string
+	config          config
+	log             *logger.Logger
 	cloudwatchiface.CloudWatchAPI
 }
 
@@ -1943,6 +1973,7 @@ func NewMonitoring(sess *session.Session, awsconf config, log *logger.Logger) cl
 		fetcher:       fetch.NewFetcher(awsfetch.BuildMonitoringFetchFuncs(fetchConfig)),
 		config:        awsconf,
 		region:        region,
+		profile:       awsconf.profile(),
 		log:           log,
 	}
 }
@@ -1953,6 +1984,10 @@ func (s *Monitoring) Name() string {
 
 func (s *Monitoring) Region() string {
 	return s.region
+}
+
+func (s *Monitoring) Profile() string {
+	return s.profile
 }
 
 func (s *Monitoring) ResourceTypes() []string {
@@ -2069,10 +2104,10 @@ func (s *Monitoring) IsSyncDisabled() bool {
 }
 
 type Cdn struct {
-	fetcher fetch.Fetcher
-	region  string
-	config  config
-	log     *logger.Logger
+	fetcher         fetch.Fetcher
+	region, profile string
+	config          config
+	log             *logger.Logger
 	cloudfrontiface.CloudFrontAPI
 }
 
@@ -2091,6 +2126,7 @@ func NewCdn(sess *session.Session, awsconf config, log *logger.Logger) cloud.Ser
 		fetcher:       fetch.NewFetcher(awsfetch.BuildCdnFetchFuncs(fetchConfig)),
 		config:        awsconf,
 		region:        region,
+		profile:       awsconf.profile(),
 		log:           log,
 	}
 }
@@ -2101,6 +2137,10 @@ func (s *Cdn) Name() string {
 
 func (s *Cdn) Region() string {
 	return s.region
+}
+
+func (s *Cdn) Profile() string {
+	return s.profile
 }
 
 func (s *Cdn) ResourceTypes() []string {
@@ -2194,10 +2234,10 @@ func (s *Cdn) IsSyncDisabled() bool {
 }
 
 type Cloudformation struct {
-	fetcher fetch.Fetcher
-	region  string
-	config  config
-	log     *logger.Logger
+	fetcher         fetch.Fetcher
+	region, profile string
+	config          config
+	log             *logger.Logger
 	cloudformationiface.CloudFormationAPI
 }
 
@@ -2216,6 +2256,7 @@ func NewCloudformation(sess *session.Session, awsconf config, log *logger.Logger
 		fetcher:           fetch.NewFetcher(awsfetch.BuildCloudformationFetchFuncs(fetchConfig)),
 		config:            awsconf,
 		region:            region,
+		profile:           awsconf.profile(),
 		log:               log,
 	}
 }
@@ -2226,6 +2267,10 @@ func (s *Cloudformation) Name() string {
 
 func (s *Cloudformation) Region() string {
 	return s.region
+}
+
+func (s *Cloudformation) Profile() string {
+	return s.profile
 }
 
 func (s *Cloudformation) ResourceTypes() []string {
